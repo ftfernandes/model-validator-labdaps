@@ -1,2 +1,2 @@
 # model-validator-labdaps
-Generic validator that uses a saved model (pkl) and test with new data
+Generic validator that uses a saved model (pkl) in MLFlow and test with new data
