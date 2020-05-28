@@ -16,8 +16,9 @@ from MLFlow_Preprocess import *
 
 #@st.cache
 def read_external_data():
-    BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master/saved_models"    
-    xgb_model_pkl = f"{BASEURL}/final_xgb.pkl"
+    BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master"    
+    xgb_model_pkl = f"{BASEURL}/saved_models/final_xgb.pkl"
+    
 
     prep_pipe, model = joblib.load(urllib.request.urlopen(xgb_model_pkl))
     return(prep_pipe,model)
@@ -36,6 +37,17 @@ def read_external_data():
 
     #return (confirmed, deaths, recovered)
 
+def ler_logotipo():
+    BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master" 
+    logoLab = f"{BASEURL}/images/LabdapsLogo.jpg"
+
+    from PIL import Image
+    image = Image.open(urllib.request.urlopen(logoLab))
+
+    #image = image.resize(387,122)
+
+    return(image)
+
 plt.style.use('bmh')
 
 def ler_CSV_explorar():
@@ -53,6 +65,11 @@ def ler_modelo_pipe_e_dados():
 def main():
 
     mensagens_sistema = st.empty()
+
+    st.image(ler_logotipo())
+    #urllib.request.urlopen(
+    
+
 
     st.title("Diagnóstico de Diabetes com Machine Learning")
     
