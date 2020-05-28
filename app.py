@@ -1,3 +1,6 @@
+# Author: Fernando T. Fernandes <ftfernandes@usp.br>
+# License: MIT
+
 import pickle
 import time  # time.sleep
 import urllib.request
@@ -11,33 +14,15 @@ from sklearn.preprocessing import StandardScaler
 
 from MLFlow_Preprocess import *
 
-#Ref: https://blog.jcharistech.com/2019/12/25/building-a-drag-drop-machine-learning-app-with-streamlit/
-
-
-#@st.cache
-def read_external_data():
+def read_saved_final_model():
     BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master"    
     xgb_model_pkl = f"{BASEURL}/saved_models/final_xgb.pkl"
-    
 
     prep_pipe, model = joblib.load(urllib.request.urlopen(xgb_model_pkl))
     return(prep_pipe,model)
-    #url_deaths = f"{BASEURL}/time_series_covid19_deaths_global.csv"
-    #url_recovered = f"{BASEURL}/time_series_covid19_recovered_global.csv"
 
-    #confirmed = pd.read_csv(url_confirmed, index_col=0)
-    #deaths = pd.read_csv(url_deaths, index_col=0)
-    #recovered = pd.read_csv(url_recovered, index_col=0)
-
-    # sum over potentially duplicate rows (France and their territories)
-    #confirmed = confirmed.groupby("Country/Region").sum().reset_index()
-    #deaths = deaths.groupby("Country/Region").sum().reset_index()
-    #recovered = recovered.groupby("Country/Region").sum().reset_index()
-
-
-    #return (confirmed, deaths, recovered)
-
-def ler_logotipo():
+@st.cache
+def read_logo():
     BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master" 
     logoLab = f"{BASEURL}/images/LabdapsLogo.jpg"
 
@@ -50,29 +35,24 @@ def ler_logotipo():
 
 plt.style.use('bmh')
 
-def ler_CSV_explorar():
+def read_external_csv():
     df = pd.read_csv(arquivoCSVExplorar, sep=';', encoding='ISO-8859-1')
 
     return(df)
 
-def ler_modelo_pipe_e_dados():
+def read_model_and_pipeline():
     prep_pipe, model = joblib.load(model_pkl)
     df = pd.read_csv(dataSetTestar, sep=';', encoding='ISO-8859-1')
 
     return(prep_pipe,model,df)
 
-
 def main():
 
     mensagens_sistema = st.empty()
 
-    st.image(ler_logotipo())
-    #urllib.request.urlopen(
-    
-
+    st.image(read_logo())
 
     st.title("Diagnóstico de Diabetes com Machine Learning")
-    
     
     tipo_analise = st.selectbox("Escolha a opção:", ["Calcular Risco" ,"Explorar Dados","Testar diferentes modelos"])
 
@@ -89,14 +69,13 @@ def main():
             st.spinner("Processando...")
 
             if model_pkl is not None:
-                prep_pipe, model, df = ler_modelo_pipe_e_dados()
+                prep_pipe, model, df = read_model_and_pipeline()
 
                 for i in range(1, 101):
                 
                     progress_bar.progress(i)
                     time.sleep(0.03)
                     status_text.text("%i%% Complete" % i)
-
                 
 
                 if dataSetTestar is not None:
@@ -137,9 +116,8 @@ def main():
             if arquivoCSVExplorar is not None:
 
                 with st.spinner('Processando. Aguarde...'):
-                    df = ler_CSV_explorar()
+                    df = read_external_csv()
                     st.table(df.head())
-
 
                     st.subheader("Histogramas")
 
@@ -193,13 +171,12 @@ def main():
 
                 with st.spinner('Processando. Aguarde...'):
 
-                    prep_pipe, model = read_external_data()
+                    prep_pipe, model = read_saved_final_model()
                     #cria nova obs
                     df = pd.DataFrame(columns=['preg','plas','pres','skin','test','mass','pedi','age'])
                     df.loc[0] = [preg,plas,pres,skin,test,mass,pedi,age]
                    
                     dfPreProcessado = prep_pipe.transform(df)
-                    
 
                     st.header("Diagnóstico estimado")
 
@@ -211,7 +188,6 @@ def main():
                     textoPositivo = "Risco alto. Probabilidade de desenvolver diabetes: **" + str(pctRisco) + "%**"
                     
                     if ynew==1:
-
                         st.error(textoPositivo)
                     else:
                         st.success(textoNegativo)
@@ -244,7 +220,7 @@ def main():
 
                     with st.spinner('Processando. Aguarde...'):
 
-                        prep_pipe, model = read_external_data()
+                        prep_pipe, model = read_saved_final_model()
                         df = pd.read_csv(dataSetTestar, sep=';', encoding='ISO-8859-1')
                         dfPreProcessado = prep_pipe.transform(df)
 
@@ -266,7 +242,7 @@ def main():
                             st.subheader("Dados normalizados")
                             st.table(dfPreProcessado)
                             
-                            st.subheader("Probabilidadee de desenvolver diabetes")
+                            st.subheader("Probabilidade de desenvolver diabetes")
                             st.table(ynewProb)
 
                     st.info("""\
