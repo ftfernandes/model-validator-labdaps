@@ -1,5 +1,5 @@
 # Author: Fernando T. Fernandes <ftfernandes@usp.br>
-# License: MIT
+# License: GPL
 
 import pickle
 import time  # time.sleep
@@ -20,6 +20,8 @@ def read_saved_final_model():
 
     prep_pipe, model = joblib.load(urllib.request.urlopen(xgb_model_pkl))
     return(prep_pipe,model)
+
+ 
 
 @st.cache
 def read_logo():
