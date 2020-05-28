@@ -54,9 +54,10 @@ def main():
 
     mensagens_sistema = st.empty()
 
-    st.title("Bem-vindo ao explorador de dados")
+    st.title("Diagnóstico de Diabetes com Machine Learning")
     
-    tipo_analise = st.sidebar.selectbox("Escolha a opção:", ["Calcular Risco" ,"Explorar Dados","Testar diferentes modelos"])
+    
+    tipo_analise = st.selectbox("Escolha a opção:", ["Calcular Risco" ,"Explorar Dados","Testar diferentes modelos"])
 
     if tipo_analise == "Testar diferentes modelos":
 
@@ -146,59 +147,115 @@ def main():
                 st.warning('Escolha um arquivo csv')
 
     else:
-        instrucao = st.empty()
-        instrucao = st.subheader("Preencha os campos ao lado para realizar uma estimativa")
-        
-        preg = st.sidebar.number_input('Número de Gravidez:', value=0, min_value=0, max_value=10,step=1)
 
-        plas = st.sidebar.slider('Plasma', 0, 199, 99)
+        tipo_predicao = st.radio("Tipo de predição",("Individual","Arquivo CSV"))
 
-        pres  = st.sidebar.slider('Pressão Sanguínea', 0, 122, 70)
+        if tipo_predicao == 'Individual':
 
-        skin  = st.sidebar.slider('Prega Tríceps', 0, 99, 10)
+            preg = st.sidebar.number_input('Número de Gravidez:', value=0, min_value=0, max_value=10,step=1)
 
-        test  = st.sidebar.slider('Insulina', 0, 846, 85)
+            plas = st.sidebar.slider('Plasma', 0, 199, 99)
 
-        mass  = st.sidebar.slider('IMC', 0, 67, 26)
+            pres  = st.sidebar.slider('Pressão Sanguínea', 0, 122, 70)
 
-        pedi  = st.sidebar.slider('Diabetes Pedigree Function (dpf)', 0.08, 2.42, 0.30)
+            skin  = st.sidebar.slider('Prega Tríceps', 0, 99, 10)
 
-        age  = st.sidebar.slider('Idade', 0, 45, 27)
+            test  = st.sidebar.slider('Insulina', 0, 846, 85)
 
-        if st.sidebar.button("Confirmar"):
+            mass  = st.sidebar.slider('IMC', 0, 67, 26)
 
-            instrucao = st.empty()
+            pedi  = st.sidebar.slider('Diabetes Pedigree Function (dpf)', 0.08, 2.42, 0.30)
 
-            with st.spinner('Processando. Aguarde...'):
+            age  = st.sidebar.slider('Idade', 0, 45, 27)
 
-                prep_pipe, model = read_external_data()
-                #cria nova obs
-                df = pd.DataFrame(columns=['preg','plas','pres','skin','test','mass','pedi','age'])
-                df.loc[0] = [preg,plas,pres,skin,test,mass,pedi,age]
+            if st.button("Confirmar"):
 
-                st.subheader("observação a ser predita")
-                st.dataframe(df)
+                instrucao = st.empty()
+
+                with st.spinner('Processando. Aguarde...'):
+
+                    prep_pipe, model = read_external_data()
+                    #cria nova obs
+                    df = pd.DataFrame(columns=['preg','plas','pres','skin','test','mass','pedi','age'])
+                    df.loc[0] = [preg,plas,pres,skin,test,mass,pedi,age]
+
+                    st.header("Informações sobre a Observação")
+
+                    st.subheader("Observação original")
+                    st.dataframe(df)
 
 
-                st.subheader("observação normalizada")
-                dfPreProcessado = prep_pipe.transform(df)
-                st.dataframe(dfPreProcessado)
+                    st.subheader("Observação normalizada")
+                    dfPreProcessado = prep_pipe.transform(df)
+                    st.dataframe(dfPreProcessado)
 
-                ynew = model.predict(dfPreProcessado)
+                    st.header("Diagóstico estimado")
 
-                ynewProb = model.predict_proba(dfPreProcessado)
-                st.subheader("classe predita")
-                st.write(ynew)
+                    ynew = model.predict(dfPreProcessado)
+                    
+                    if ynew==1:
+                        st.error("Alta probabilidade de diabetes diagnosticada")
+                    else:
+                        st.success("Baixa probabilidade de diabetes diagnosticada")
 
-                st.subheader("Probabilidades preditas")
-                st.write(ynewProb)
+                    #st.subheader("classe predita")
+                    #st.write(ynew)
+
+                    ynewProb = model.predict_proba(dfPreProcessado)
+                    st.subheader("Probabilidades preditas")
+
+                    pctRisco = np.around(ynewProb[:,1].item() * 100,2)
+                    st.write("Risco estimado de desenvolver diabetes:", pctRisco,"%")
+                    
+                    st.write(ynewProb)
+
+                    #st.write(type(ynewProb))
+                
+                st.info("""\
+                        
+                    by: [Labdaps](https://labdaps.github.io/) | source: [GitHub](https://github.com/ftfernandes/model-validator-labdaps)
+                    | data source: [PIMA Dataset (Kaggle)](https://www.kaggle.com/uciml/pima-indians-diabetes-database). 
+                """)
+        else:
             
-            st.success("Estimativa concluída!")
+            dataSetTestar = st.file_uploader("Escolha um arquivo CSV para realizar a predição", type=["csv"])
 
+            if st.button("Confirmar"):
+            
+                if dataSetTestar is not None:
 
-        #st.inp
-        
-        
+                    with st.spinner('Processando. Aguarde...'):
+
+                        prep_pipe, model = read_external_data()
+                        df = pd.read_csv(dataSetTestar, sep=';', encoding='ISO-8859-1')
+
+                        st.header("Dados a serem preditos")
+
+                        st.subheader("Dados originais")
+                        st.dataframe(df.head())
+
+                        st.subheader("Dados normalizados")
+                        dfPreProcessado = prep_pipe.transform(df)
+                        st.dataframe(dfPreProcessado)
+                        
+                        ynew = model.predict(dfPreProcessado)
+                        st.header("Diagósticos estimados")
+
+                        st.write(ynew)
+
+                        ynewProb = model.predict_proba(dfPreProcessado)
+                        st.subheader("Probabilidades estimadas")
+                        st.write(ynewProb)
+
+                    st.info("""\
+                        
+                    by: [Labdaps](https://labdaps.github.io/) | source: [GitHub](https://github.com/ftfernandes/model-validator-labdaps)
+                    | data source: [PIMA Dataset (Kaggle)](https://www.kaggle.com/uciml/pima-indians-diabetes-database). 
+                """)
+
+                else:
+                    st.warning("Escolhar um arquivo CSV!")
+
 
 if __name__ == "__main__":
     main()
