@@ -62,8 +62,8 @@ def main():
     if tipo_analise == "Testar diferentes modelos":
 
         global model_pkl,dataSetTestar
-        model_pkl = st.file_uploader("1) Suba um arquivo com o modelo salvo (*.pkl)", type=("pkl"))
-        dataSetTestar = st.file_uploader("2) Suba um arquivo com o CSV a predizer o desfecho", type=["csv"])
+        model_pkl = st.sidebar.file_uploader("1) Suba um arquivo com o modelo salvo no MLFlow (*.pkl)", type=("pkl"))
+        dataSetTestar = st.sidebar.file_uploader("2) Suba um arquivo com o CSV a predizer o desfecho", type=["csv"])
 
         status_text = st.empty()
         progress_bar = st.progress(0)
@@ -80,30 +80,30 @@ def main():
                     time.sleep(0.03)
                     status_text.text("%i%% Complete" % i)
 
-                st.subheader("Parâmetros do modelo treinado")
-                st.write(model)
+                
 
                 if dataSetTestar is not None:
                     st.subheader("Visualizando os dados a testar sem pré-processar")
                 
-                    st.dataframe(df.head())
+                    st.table(df.head())
 
                     st.subheader("Visualizando os dados a testar após pré-processar")
 
                     dfPreProcessado = prep_pipe.transform(df)
-                    st.dataframe(dfPreProcessado)
+                    st.table(dfPreProcessado)
 
                     ynew = model.predict(dfPreProcessado)
 
                     ynewProb = model.predict_proba(dfPreProcessado)
 
                     st.write("classe predita")
-                    st.write(ynew)
+                    st.table(ynew)
 
                     st.write("Probabilidades preditas")
-                    st.write(ynewProb)
+                    st.table(ynewProb)
 
-                    st.success('Modelo validado com novos dados!')
+                    st.subheader("Parâmetros do modelo treinado")
+                    st.write(model)
                 
             else:
                 st.warning('Escolha um arquivo pkl primeiro!')
@@ -113,7 +113,7 @@ def main():
     elif tipo_analise == "Explorar Dados":
 
         global arquivoCSVExplorar
-        arquivoCSVExplorar = st.file_uploader("Escolha um arquivo CSV", type=["csv"])
+        arquivoCSVExplorar = st.sidebar.file_uploader("Escolha um arquivo CSV", type=["csv"])
 
         if st.button("Confirmar"):
 
@@ -121,7 +121,7 @@ def main():
 
                 with st.spinner('Processando. Aguarde...'):
                     df = ler_CSV_explorar()
-                    st.write(df.head())
+                    st.table(df.head())
 
 
                     st.subheader("Histogramas")
@@ -204,13 +204,13 @@ def main():
                         st.header("Detalhes da amostra")
                     
                         st.subheader("Observação original")
-                        st.dataframe(df)
+                        st.table(df)
 
                         st.subheader("Observação normalizada")
-                        st.dataframe(dfPreProcessado)
+                        st.table(dfPreProcessado)
 
                         st.subheader("Probabilidades")
-                        st.write(ynewProb)
+                        st.table(ynewProb)
 
                 st.info("""\
                         
@@ -234,7 +234,7 @@ def main():
                         st.header("Diagnóstico estimado")
                         ynew = model.predict(dfPreProcessado)
                         ynewProb = model.predict_proba(dfPreProcessado)
-                        st.write(ynewProb)
+                        st.table(ynewProb)
 
                         #pctRisco = np.around(ynewProb[:,1].item() * 100,2)
 
@@ -244,13 +244,13 @@ def main():
                             st.header("Detalhes da Amostra")
 
                             st.subheader("Dados originais")
-                            st.dataframe(df.head())
+                            st.table(df.head())
 
                             st.subheader("Dados normalizados")
-                            st.dataframe(dfPreProcessado)
+                            st.table(dfPreProcessado)
                             
                             st.subheader("Probabilidadee de desenvolver diabetes")
-                            st.write(ynewProb)
+                            st.table(ynewProb)
 
                     st.info("""\
                         
