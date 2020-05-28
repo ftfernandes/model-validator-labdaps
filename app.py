@@ -150,6 +150,8 @@ def main():
 
         tipo_predicao = st.radio("Tipo de predição",("Individual","Arquivo CSV"))
 
+        exibirDetalhes = st.checkbox('Exibir detalhes da amostra')
+
         if tipo_predicao == 'Individual':
 
             preg = st.sidebar.number_input('Número de Gravidez:', value=0, min_value=0, max_value=10,step=1)
@@ -178,39 +180,38 @@ def main():
                     #cria nova obs
                     df = pd.DataFrame(columns=['preg','plas','pres','skin','test','mass','pedi','age'])
                     df.loc[0] = [preg,plas,pres,skin,test,mass,pedi,age]
-
-                    st.header("Informações sobre a Observação")
-
-                    st.subheader("Observação original")
-                    st.dataframe(df)
-
-
-                    st.subheader("Observação normalizada")
+                   
                     dfPreProcessado = prep_pipe.transform(df)
-                    st.dataframe(dfPreProcessado)
+                    
 
-                    st.header("Diagóstico estimado")
+                    st.header("Diagnóstico estimado")
 
                     ynew = model.predict(dfPreProcessado)
+                    ynewProb = model.predict_proba(dfPreProcessado)
+                    pctRisco = np.around(ynewProb[:,1].item() * 100,2)
+
+                    textoNegativo = "Risco baixo. Probabilidade de desenvolver diabetes: **" + str(pctRisco) + "%**"
+                    textoPositivo = "Risco alto. Probabilidade de desenvolver diabetes: **" + str(pctRisco) + "%**"
                     
                     if ynew==1:
-                        st.error("Alta probabilidade de diabetes diagnosticada")
+
+                        st.error(textoPositivo)
                     else:
-                        st.success("Baixa probabilidade de diabetes diagnosticada")
+                        st.success(textoNegativo)
 
-                    #st.subheader("classe predita")
-                    #st.write(ynew)
+                    if exibirDetalhes:
 
-                    ynewProb = model.predict_proba(dfPreProcessado)
-                    st.subheader("Probabilidades preditas")
-
-                    pctRisco = np.around(ynewProb[:,1].item() * 100,2)
-                    st.write("Risco estimado de desenvolver diabetes:", pctRisco,"%")
+                        st.header("Detalhes da amostra")
                     
-                    st.write(ynewProb)
+                        st.subheader("Observação original")
+                        st.dataframe(df)
 
-                    #st.write(type(ynewProb))
-                
+                        st.subheader("Observação normalizada")
+                        st.dataframe(dfPreProcessado)
+
+                        st.subheader("Probabilidades")
+                        st.write(ynewProb)
+
                 st.info("""\
                         
                     by: [Labdaps](https://labdaps.github.io/) | source: [GitHub](https://github.com/ftfernandes/model-validator-labdaps)
@@ -218,7 +219,7 @@ def main():
                 """)
         else:
             
-            dataSetTestar = st.file_uploader("Escolha um arquivo CSV para realizar a predição", type=["csv"])
+            dataSetTestar = st.sidebar.file_uploader("Escolha um arquivo CSV para realizar a predição", type=["csv"])
 
             if st.button("Confirmar"):
             
@@ -228,24 +229,28 @@ def main():
 
                         prep_pipe, model = read_external_data()
                         df = pd.read_csv(dataSetTestar, sep=';', encoding='ISO-8859-1')
-
-                        st.header("Dados a serem preditos")
-
-                        st.subheader("Dados originais")
-                        st.dataframe(df.head())
-
-                        st.subheader("Dados normalizados")
                         dfPreProcessado = prep_pipe.transform(df)
-                        st.dataframe(dfPreProcessado)
-                        
+
+                        st.header("Diagnóstico estimado")
                         ynew = model.predict(dfPreProcessado)
-                        st.header("Diagósticos estimados")
-
-                        st.write(ynew)
-
                         ynewProb = model.predict_proba(dfPreProcessado)
-                        st.subheader("Probabilidades estimadas")
                         st.write(ynewProb)
+
+                        #pctRisco = np.around(ynewProb[:,1].item() * 100,2)
+
+                        #textoPositivo = "Risco alto. Probabilidade de desenvolver diabetes: **" + str(pctRisco) + "%**"
+                        if exibirDetalhes:
+
+                            st.header("Detalhes da Amostra")
+
+                            st.subheader("Dados originais")
+                            st.dataframe(df.head())
+
+                            st.subheader("Dados normalizados")
+                            st.dataframe(dfPreProcessado)
+                            
+                            st.subheader("Probabilidadee de desenvolver diabetes")
+                            st.write(ynewProb)
 
                     st.info("""\
                         
