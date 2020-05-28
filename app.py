@@ -219,7 +219,7 @@ def main():
                 """)
         else:
             
-            dataSetTestar = st.sidebar.file_uploader("Escolha um arquivo CSV para realizar a predição", type=["csv"])
+            dataSetTestar = st.sidebar.file_uploader("Escolha um arquivo CSV para realizar a predição (sem o desfecho)", type=["csv"])
 
             if st.button("Confirmar"):
             
