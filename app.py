@@ -1,5 +1,6 @@
 import pickle
 import time  # time.sleep
+import urllib.request
 
 import joblib
 import matplotlib.pyplot as plt
@@ -14,9 +15,12 @@ from MLFlow_Preprocess import *
 
 
 #@st.cache
-#def read_data():
-    #BASEURL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series"    
-    #url_confirmed = f"{BASEURL}/time_series_covid19_confirmed_global.csv"
+def read_external_data():
+    BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master/saved_models"    
+    xgb_model_pkl = f"{BASEURL}/final_xgb.pkl"
+
+    prep_pipe, model = joblib.load(urllib.request.urlopen(xgb_model_pkl))
+    return(prep_pipe,model)
     #url_deaths = f"{BASEURL}/time_series_covid19_deaths_global.csv"
     #url_recovered = f"{BASEURL}/time_series_covid19_recovered_global.csv"
 
@@ -142,26 +146,54 @@ def main():
                 st.warning('Escolha um arquivo csv')
 
     else:
-        st.subheader("Preencha os campos ao lado para realizar uma estimativa")
+        instrucao = st.empty()
+        instrucao = st.subheader("Preencha os campos ao lado para realizar uma estimativa")
         
         preg = st.sidebar.number_input('Número de Gravidez:', value=0, min_value=0, max_value=10,step=1)
 
-        plasma = st.sidebar.slider('Plasma', 0, 199, 25)
+        plas = st.sidebar.slider('Plasma', 0, 199, 99)
 
         pres  = st.sidebar.slider('Pressão Sanguínea', 0, 122, 70)
 
-        skin  = st.sidebar.slider('Skin Thickness', 0, 99, 20)
+        skin  = st.sidebar.slider('Prega Tríceps', 0, 99, 10)
 
-        test  = st.sidebar.slider('Insulina', 0, 122, 70)
+        test  = st.sidebar.slider('Insulina', 0, 846, 85)
 
-        mass  = st.sidebar.slider('BMI', 0, 122, 70)
+        mass  = st.sidebar.slider('IMC', 0, 67, 26)
 
-        pedi  = st.sidebar.slider('Diabetes Pedigree', 0, 122, 70)
+        pedi  = st.sidebar.slider('Diabetes Pedigree Function (dpf)', 0.08, 2.42, 0.30)
 
-        age  = st.sidebar.slider('Idade', 0, 100, 30)
+        age  = st.sidebar.slider('Idade', 0, 45, 27)
 
         if st.sidebar.button("Confirmar"):
-            st.warning("Em construção")
+
+            instrucao = st.empty()
+
+            with st.spinner('Processando. Aguarde...'):
+
+                prep_pipe, model = read_external_data()
+                #cria nova obs
+                df = pd.DataFrame(columns=['preg','plas','pres','skin','test','mass','pedi','age'])
+                df.loc[0] = [preg,plas,pres,skin,test,mass,pedi,age]
+
+                st.subheader("observação a ser predita")
+                st.dataframe(df)
+
+
+                st.subheader("observação normalizada")
+                dfPreProcessado = prep_pipe.transform(df)
+                st.dataframe(dfPreProcessado)
+
+                ynew = model.predict(dfPreProcessado)
+
+                ynewProb = model.predict_proba(dfPreProcessado)
+                st.subheader("classe predita")
+                st.write(ynew)
+
+                st.subheader("Probabilidades preditas")
+                st.write(ynewProb)
+            
+            st.success("Estimativa concluída!")
 
 
         #st.inp
