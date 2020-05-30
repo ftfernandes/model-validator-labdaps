@@ -205,7 +205,14 @@ def main():
                         st.table(dfPreProcessado)
 
                         st.subheader("Probabilidades")
-                        st.table(ynewProb)
+
+                        dfProb = pd.DataFrame(data=ynewProb, columns = ['negativo', 'positivo'])
+                        dfProb = dfProb * 100
+                        
+                        st.table(dfProb)
+                        #dfProb.columns['positivo','negativo']
+
+                        #st.table(ynewProb[:0,2])
 
                 st.info("""\
                         
@@ -227,13 +234,14 @@ def main():
                         dfPreProcessado = prep_pipe.transform(df)
 
                         st.header("Diagnóstico estimado")
-                        ynew = model.predict(dfPreProcessado)
+                        #ynew = model.predict(dfPreProcessado)
                         ynewProb = model.predict_proba(dfPreProcessado)
-                        st.table(ynewProb)
 
-                        #pctRisco = np.around(ynewProb[:,1].item() * 100,2)
+                        dfProb = pd.DataFrame(data=ynewProb, columns = ['negativo', 'positivo'])
+                        dfProb = dfProb * 100
 
-                        #textoPositivo = "Risco alto. Probabilidade de desenvolver diabetes: **" + str(pctRisco) + "%**"
+                        st.table(dfProb)
+
                         if exibirDetalhes:
 
                             st.header("Detalhes da Amostra")
@@ -245,7 +253,11 @@ def main():
                             st.table(dfPreProcessado)
                             
                             st.subheader("Probabilidade de desenvolver diabetes")
-                            st.table(ynewProb)
+
+                            dfProb = pd.DataFrame(data=ynewProb, columns = ['negativo', 'positivo'])
+                            dfProb = dfProb * 100
+
+                            st.table(dfProb)
 
                     st.info("""\
                         
