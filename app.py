@@ -13,10 +13,28 @@ from pandas.plotting import parallel_coordinates
 
 import seaborn as sns
 import streamlit as st
+import plotly.express as px
 
 from sklearn.preprocessing import StandardScaler
 
 from MLFlow_Preprocess import *
+
+
+def generate_parallel_coordinates_plot(df):
+
+    df = df.drop('obs', 1)
+    fig = px.parallel_coordinates(df, color="positivo", labels={
+                "preg": "qtd. gravidez",
+                "plas": "Plasma",
+                "pres": "Pressão",
+                "skin": "Prega cutânea",
+                "test": "Insulina", 
+                "mass": "IMC", 
+                "pedi": "dbf", 
+                "age": "idade"},
+                             color_continuous_scale=px.colors.diverging.Tealrose)
+    st.plotly_chart(fig, use_container_width=True)
+    #st.write(fig)
 
 def read_saved_final_model():
     BASEURL = "https://github.com/ftfernandes/model-validator-labdaps/raw/master"    
@@ -242,12 +260,12 @@ def main():
                         ynewProb = model.predict_proba(dfPreProcessado)
                         ynew = model.predict(dfPreProcessado)
 
-                        st.subheader("Probabilidades estimadas")
+                        st.subheader("Probabilidades estimadas (primeiras observações)")
 
                         dfProb = pd.DataFrame(data=ynewProb, columns = ['negativo', 'positivo'])
                         dfProb = dfProb * 100
 
-                        st.table(dfProb)
+                        st.table(dfProb['positivo'].head())
 
                         #Preparo o gráfico de coordenadas paralelas
                         df_classe_estimada = pd.DataFrame(data=ynew, columns = ['positivo'])
@@ -259,6 +277,10 @@ def main():
                         st.subheader("Visão Geral")
 
                         result = pd.concat([df, df_classe_estimada], axis=1, sort=False)
+
+                        resultProb = pd.concat([df, dfProb['positivo']], axis=1, sort=False)
+                        
+                        
                         parallel_coordinates(result, 'positivo',color=('#556270', '#C7F464'))
 
                         #Adiciono um label sim ou não para diabetes
@@ -268,9 +290,14 @@ def main():
                                 label = 'sim'
                             else:
                                 label = 'não'
-                            ax.annotate(label, xy=(8,val), ha='left', va='center')
+                            ax.annotate(label, xy=(9,val), ha='left', va='center')
+
+                        plt.gca().legend_.remove()
+                        plt.title("Estimativa de diagnóstico de Diabetes")
 
                         st.pyplot()
+
+                        generate_parallel_coordinates_plot(resultProb)
 
                         if exibirDetalhes:
 
@@ -280,7 +307,7 @@ def main():
                             st.table(df.head())
 
                             st.subheader("Dados normalizados")
-                            st.table(dfPreProcessado)
+                            st.table(dfPreProcessado.head())
                             
                     st.info("""\
                         
